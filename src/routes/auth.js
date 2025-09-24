@@ -11,7 +11,7 @@ router.post("/signup", async (req, res) => {
   try {
     const hashedPw = await bcrypt.hash(password, saltRounds);
     const [result] = await pool.query(
-      "INSERT INTO user (name, email, password) VALUES (?, ?, ?)",
+      "INSERT INTO users (name, email, password) VALUES (?, ?, ?)",
       [name, email, hashedPw]
     );
     res.json({ success: true, userId: result.insertId });
@@ -25,7 +25,7 @@ router.post("/signup", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const [rows] = await pool.query("SELECT * FROM user WHERE email = ?", [email]);
+    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
     if (rows.length === 0) return res.status(400).json({ success: false, message: "유저 없음" });
 
     const match = await bcrypt.compare(password, rows[0].password);
