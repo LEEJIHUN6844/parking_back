@@ -9,12 +9,6 @@ const corsOptions = require('./configs/corsOptions'); // ◀◀◀ CORS 설정 �
 
 const app = express();
 
-// 모든 요청을 로깅하는 미들웨어 (디버깅용)
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] Incoming Request: ${req.method} ${req.originalUrl}`);
-  next();
-});
-
 app.use(cors(corsOptions)); // ◀◀◀ 불러온 설정을 여기에 적용
 app.use(express.json());
 
