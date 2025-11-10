@@ -1,18 +1,14 @@
-// parking_back/src/routes/seoulApi.js
 const express = require("express");
-const pool = require("../../configs/db"); // DB 설정 가져오기
+const pool = require("../../configs/db");
 const router = express.Router();
-const axios = require("axios"); // 'search' 라우트를 위해 남겨둠
+const axios = require("axios");
 
-// 기존 /parking/:spotCode 라우트를 아래 코드로 대체
 router.get("/parking/:spotCode", async (req, res) => {
   const { spotCode } = req.params;
 
   try {
     const connection = await pool.getConnection();
 
-    // 프론트엔드가 기대하는 CITYDATA 객체 구조를 만듭니다.
-    //
     let resultData = {
       CITYDATA: {
         AREA_CD: spotCode,
@@ -22,13 +18,13 @@ router.get("/parking/:spotCode", async (req, res) => {
     };
 
     try {
-      // 1. DB에서 주차장 정보 조회
+      // DB에서 주차장 정보 조회
       const [parkingRows] = await connection.query(
         "SELECT * FROM hotspot_parking_lots WHERE area_cd = ?",
         [spotCode]
       );
 
-      // DB 컬럼명(snake_case)을 API 컬럼명(UPPERCASE)으로 변환
+      // DB 컬럼명을 API 컬럼명으로 변환
       resultData.CITYDATA.PRK_STTS = parkingRows.map((row) => ({
         PRK_CD: row.prk_cd,
         PRK_NM: row.prk_name,
@@ -44,17 +40,16 @@ router.get("/parking/:spotCode", async (req, res) => {
         ADD_TIME_RATES: row.add_time_rates,
         ROAD_ADDR: row.road_address,
         ADDRESS: row.address,
-        LAT: row.lat, // 프론트에서 이 값을 사용합니다.
-        LNG: row.lng, // 프론트에서 이 값을 사용합니다.
+        LAT: row.lat,
+        LNG: row.lng,
       }));
 
-      // 2. DB에서 전기차 충전소 정보 조회
+      // DB에서 전기차 충전소 정보 조회
       const [chargerRows] = await connection.query(
         "SELECT * FROM hotspot_ev_chargers WHERE area_cd = ?",
         [spotCode]
       );
 
-      // DB에 플랫하게 저장된 충전기 목록을 충전소(STAT_ID) 기준으로 그룹화
       const stationsMap = new Map();
       chargerRows.forEach((row) => {
         // 충전소 정보가 맵에 없으면 새로 추가
@@ -111,7 +106,7 @@ router.get("/parking/:spotCode", async (req, res) => {
       // 맵의 값들을 배열로 변환하여 최종 결과에 할당
       resultData.CITYDATA.CHARGER_STTS = Array.from(stationsMap.values());
     } finally {
-      if (connection) connection.release(); // 커넥션 반환
+      if (connection) connection.release();
     }
 
     res.json(resultData);
@@ -121,7 +116,6 @@ router.get("/parking/:spotCode", async (req, res) => {
   }
 });
 
-// '/search' 라우트는 GetParkInfo API를 사용하므로 일단 그대로 둡니다.
 router.get("/search", async (req, res) => {
   const { keyword } = req.query;
   const apiKey = process.env.SEOUL_DATA_API_KEY;

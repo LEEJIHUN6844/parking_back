@@ -1,7 +1,7 @@
 const axios = require("axios");
 const pool = require("../../configs/db");
 
-// KakaoMap.jsx 파일에 있는 핫스팟 목록
+// 핫스팟 목록
 const hotspots = [
   { name: "강남 MICE 관광특구", code: "POI001" },
   { name: "동대문 관광특구", code: "POI002" },
@@ -127,15 +127,13 @@ const hotspots = [
 
 const apiKey = process.env.SEOUL_DATA_API_KEY;
 
-// 헬퍼 함수: 데이터가 단일 객체일 경우 배열로 감싸줍니다.
 const ensureDataArray = (data) => {
   if (!data) return [];
   return Array.isArray(data) ? data : [data];
 };
 
-// API의 타임스탬프 문자열(YYYYMMDDHHMMSS)을 MySQL TIMESTAMP 형식으로 변환
 const parseTimestamp = (ts) => {
-  if (!ts || String(ts).length !== 14) return null; // 문자열로 변환하여 길이 체크
+  if (!ts || String(ts).length !== 14) return null;
   try {
     const s = String(ts).replace(
       /(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})/,
@@ -175,12 +173,11 @@ async function fetchAndSaveSeoulData() {
       const apiUrl = `http://openapi.seoul.go.kr:8088/${apiKey}/json/citydata/1/1/${spot.code}`;
 
       let cityData;
-      let response; // ◀◀◀ 스코프 문제 해결
+      let response;
 
       try {
         response = await axios.get(apiUrl);
 
-        // API 응답의 루트에 `SeoulRtd.citydata` 래퍼가 없으므로 바로 `CITYDATA`에 접근합니다.
         cityData = response.data?.CITYDATA;
       } catch (apiError) {
         console.error(
@@ -190,7 +187,6 @@ async function fetchAndSaveSeoulData() {
         continue;
       }
 
-      // cityData가 있는지 확인하고, 없다면 `response.data`의 RESULT 코드를 확인합니다.
       if (!cityData) {
         if (response && response.data?.RESULT?.["RESULT.CODE"] === "INFO-200") {
           console.warn(
@@ -208,7 +204,7 @@ async function fetchAndSaveSeoulData() {
         continue;
       }
 
-      // --- 1. 주차장 정보 저장 (PRK_STTS) ---
+      // 주차장 정보 저장
       const parkingLots = ensureDataArray(cityData.PRK_STTS);
 
       if (parkingLots.length > 0) {
@@ -276,7 +272,7 @@ async function fetchAndSaveSeoulData() {
         }
       }
 
-      // --- 2. 전기차 충전소 정보 저장 (CHARGER_STTS) ---
+      // 전기차 충전소 정보 저장
       const chargerStations = ensureDataArray(cityData.CHARGER_STTS);
 
       if (chargerStations.length > 0) {
@@ -344,7 +340,7 @@ async function fetchAndSaveSeoulData() {
           }
         }
       }
-    } // end of for...of(hotspots)
+    }
 
     await connection.commit();
     console.log(

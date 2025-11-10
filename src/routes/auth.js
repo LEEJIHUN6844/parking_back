@@ -1,5 +1,5 @@
 const express = require("express");
-const pool = require('../../configs/db');
+const pool = require("../../configs/db");
 const bcrypt = require("bcrypt");
 
 const router = express.Router();
@@ -25,13 +25,20 @@ router.post("/signup", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
-    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [email]);
-    if (rows.length === 0) return res.status(400).json({ success: false, message: "유저 없음" });
+    const [rows] = await pool.query("SELECT * FROM users WHERE email = ?", [
+      email,
+    ]);
+    if (rows.length === 0)
+      return res.status(400).json({ success: false, message: "유저 없음" });
 
     const match = await bcrypt.compare(password, rows[0].password);
-    if (!match) return res.status(400).json({ success: false, message: "비밀번호 틀림" });
+    if (!match)
+      return res.status(400).json({ success: false, message: "비밀번호 틀림" });
 
-    res.json({ success: true, user: { id: rows[0].id, name: rows[0].name, email: rows[0].email } });
+    res.json({
+      success: true,
+      user: { name: rows[0].name, email: rows[0].email },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ success: false, message: "DB 오류" });
